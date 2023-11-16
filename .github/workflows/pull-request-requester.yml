@@ -36,10 +36,12 @@ jobs:
               base: 'main',
               head: context.repo.owner + ':' + process.env.BASE_REF
             })
-            core.info(JSON.stringify(data, null, 2))
 
             // If there are PRs, we're done
-            if (data.length !== 0) return
+            if (data.length !== 0) {
+              core.info(`Existing PR found! ${data[0].html_url}`)
+              return
+            }
 
             // Otherwise, create a PR to main
             await github.rest.pulls.create({
