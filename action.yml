@@ -2,18 +2,30 @@ name: Pull Request Requester
 description: Demonstrates how to automatically create pull requests.
 
 inputs:
-  target_ref:
-    description:
-      The base branch to create the pull request against. Defaults to the
-      default branch of the repository.
-    required: true
-    default: ${{ github.event.repository.default_branch }}
   head_ref:
     description:
       The head branch to create the pull request from. Defaults to the base ref
       of the PR that triggered this action.
     required: true
     default: ${{ github.base_ref }}
+  owner:
+    description:
+      The owner of the repository to create the pull request in. Defaults to the
+      owner of the PR that triggered this action.
+    required: true
+    default: ${{ github.event.repository.owner.login }}
+  repo:
+    description:
+      The repository to create the pull request in. Defaults to the repository
+      of the PR that triggered this action.
+    required: true
+    default: ${{ github.event.repository.name }}
+  target_ref:
+    description:
+      The base branch to create the pull request against. Defaults to the
+      default branch of the repository.
+    required: true
+    default: ${{ github.event.repository.default_branch }}
 
 runs:
   using: composite
@@ -22,20 +34,25 @@ runs:
     - name: Check for PR to main
       id: check
       uses: actions/github-script@v7
+      env:
+        HEAD_REF: ${{ inputs.head_ref }}
+        OWNER: ${{ inputs.owner }}
+        REPO: ${{ inputs.repo }}
+        TARGET_REF: ${{ inputs.target_ref }}
       with:
         github-token: ${{ github.token }}
         script: |
-          core.info('${{ inputs.head_ref }}')
-          core.info('${{ inputs.target_ref }}')
-          core.info('${{ context.repo.owner }}')
-          core.info('${{ context.repo.repo }}')
+          core.info(process.env.HEAD_REF)
+          core.info(process.env.OWNER)
+          core.info(process.env.REPO)
+          core.info(process.env.TARGET_REF)
           // Check for any PRs to main that are still open
           const { data } = await github.rest.pulls.list({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
+            owner: process.env.OWNER,
+            repo: process.env.REPO,
             state: 'open',
-            base: '${{ inputs.target_ref }}',
-            head: `${context.repo.owner}:${{ inputs.head_ref }}`
+            base: process.env.TARGET_REF,
+            head: `${process.env.OWNER}:${process.env.HEAD_REF}`
           })
 
           // If there are PRs, we're done
@@ -46,9 +63,9 @@ runs:
 
           // Otherwise, create a PR to main
           await github.rest.pulls.create({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            title: 'Merge ${{ inputs.head_ref }} to ${{ inputs.target_ref }}',
-            head: '${{ inputs.head_ref }}',
-            base: '${{ inputs.target_ref }}'
+            owner: process.env.OWNER,
+            repo: process.env.REPO,
+            title: `Merge ${process.env.HEAD_REF} to ${process.env.TARGET_REF}`,
+            head: process.env.HEAD_REF,
+            base: process.env.TARGET_REF
           })
