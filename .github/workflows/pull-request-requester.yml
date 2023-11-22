@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: Check for PR to main
         id: check
-        uses: .
+        uses: ncalteen/pull-request-requester@main
         with:
           target_ref: main
           head_ref: ${{ github.base_ref }}
