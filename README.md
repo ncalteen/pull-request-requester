@@ -20,3 +20,5 @@ Check it out [here](.github/workflows/pull-request-requester.yml)!
 
 In order to use this workflow, you must ensure that the **Allow GitHub Actions
 to create and approve pull requests** option is enabled for your repository!
+
+:beers:
