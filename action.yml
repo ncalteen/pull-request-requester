@@ -42,10 +42,12 @@ runs:
       with:
         github-token: ${{ github.token }}
         script: |
-          core.info(process.env.HEAD_REF)
-          core.info(process.env.OWNER)
-          core.info(process.env.REPO)
-          core.info(process.env.TARGET_REF)
+          core.info('Running action with the following inputs:')
+          core.info(`  - head_ref: ${process.env.HEAD_REF}`)
+          core.info(`  - target_ref: ${process.env.TARGET_REF}`)
+          core.info(`  - owner: ${process.env.OWNER}`)
+          core.info(`  - repo: ${process.env.REPO}`)
+
           // Check for any PRs to main that are still open
           const { data } = await github.rest.pulls.list({
             owner: process.env.OWNER,
@@ -60,6 +62,8 @@ runs:
             core.info(`Existing PR found! ${data[0].html_url}`)
             return
           }
+
+          core.info('No existing PR found, creating one...')
 
           // Otherwise, create a PR to main
           await github.rest.pulls.create({
