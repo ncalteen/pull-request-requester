@@ -22,32 +22,7 @@ jobs:
     steps:
       - name: Check for PR to main
         id: check
-        uses: actions/github-script@v7
-        env:
-          # Base ref of the merged PR (this should be the release branch)
-          BASE_REF: ${{ github.base_ref }}
+        uses: .
         with:
-          script: |
-            // Check for any PRs to main that are still open
-            const { data } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              base: 'main',
-              head: context.repo.owner + ':' + process.env.BASE_REF
-            })
-
-            // If there are PRs, we're done
-            if (data.length !== 0) {
-              core.info(`Existing PR found! ${data[0].html_url}`)
-              return
-            }
-
-            // Otherwise, create a PR to main
-            await github.rest.pulls.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'Merge ' + process.env.BASE_REF + ' to main',
-              head: process.env.BASE_REF,
-              base: 'main'
-            })
+          target_ref: main
+          head_ref: ${{ github.base_ref }}

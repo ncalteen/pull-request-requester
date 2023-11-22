@@ -1,0 +1,54 @@
+name: Pull Request Requester
+description: Demonstrates how to automatically create pull requests.
+
+inputs:
+  target_ref:
+    description:
+      The base branch to create the pull request against. Defaults to the
+      default branch of the repository.
+    required: true
+    default: ${{ github.event.repository.default_branch }}
+  head_ref:
+    description:
+      The head branch to create the pull request from. Defaults to the base ref
+      of the PR that triggered this action.
+    required: true
+    default: ${{ github.base_ref }}
+
+runs:
+  using: composite
+
+  steps:
+    - name: Check for PR to main
+      id: check
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ github.token }}
+        script: |
+          core.info('${{ inputs.head_ref }}')
+          core.info('${{ inputs.target_ref }}')
+          core.info('${{ context.repo.owner }}')
+          core.info('${{ context.repo.repo }}')
+          // Check for any PRs to main that are still open
+          const { data } = await github.rest.pulls.list({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            base: '${{ inputs.target_ref }}',
+            head: `${context.repo.owner}:${{ inputs.head_ref }}`
+          })
+
+          // If there are PRs, we're done
+          if (data.length !== 0) {
+            core.info(`Existing PR found! ${data[0].html_url}`)
+            return
+          }
+
+          // Otherwise, create a PR to main
+          await github.rest.pulls.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: 'Merge ${{ inputs.head_ref }} to ${{ inputs.target_ref }}',
+            head: '${{ inputs.head_ref }}',
+            base: '${{ inputs.target_ref }}'
+          })
